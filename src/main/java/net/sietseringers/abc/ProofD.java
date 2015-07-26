@@ -3,12 +3,13 @@ package net.sietseringers.abc;
 import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Pairing;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
 public class ProofD {
 	public int n;
-	public Element nonce;
+	public BigInteger nonce;
 
 	public Element K;
 	public Element S;
@@ -23,7 +24,7 @@ public class ProofD {
 	public Map<Integer, Element> ki;
 	public Map<Integer, Element> si;
 
-	public ProofD(int n, Element nonce, Element bK, Element bS, ElementList bSi, Element bC, Element bT, Element W, Map<Integer,Element> si, Map<Integer,Element> attrs) {
+	public ProofD(int n, BigInteger nonce, Element bK, Element bS, ElementList bSi, Element bC, Element bT, Element W, Map<Integer,Element> si, Map<Integer,Element> attrs) {
 		this.n = n;
 		this.nonce = nonce;
 

@@ -4,6 +4,7 @@ import java.util.*;
 import java.lang.*;
 
 import it.unisa.dia.gas.jpbc.*;
+import sun.security.util.BigInt;
 
 class Main
 {
@@ -32,7 +33,7 @@ class Main
 		disclosed.put(3, false);
 		disclosed.put(4, true);
 
-		ProofD proof = c.getDisclosureProof(e.getZr().newRandomElement(), disclosed);
+		ProofD proof = c.getDisclosureProof(e.getZr().newRandomElement().toBigInteger(), disclosed);
 
 		System.out.println(proof.isValid(sk.publicKey));
 	}

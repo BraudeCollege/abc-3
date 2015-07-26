@@ -3,6 +3,7 @@ package net.sietseringers.abc;
 import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Field;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +50,7 @@ public class Credential {
 		C = C.getImmutable();
 	}
 
-	public ProofD getDisclosureProof(Element nonce, Map<Integer,Boolean> disclosed) {
+	public ProofD getDisclosureProof(BigInteger nonce, Map<Integer,Boolean> disclosed) {
 		Element alpha = Zn.newRandomElement();
 		Element beta = Zn.newRandomElement();
 		Element alphabeta = alpha.duplicate().div(beta).negate();

@@ -51,11 +51,12 @@ public class ElementList extends ArrayList<Element> {
 		super(n);
 	}
 
-	public static ElementList random(Field f, int n) {
+	public static ElementList random(int n) {
 		ElementList l = new ElementList(n);
+		Field Zn = SystemParameters.e.getZr();
 
 		for (int i = 0; i < n; i++) {
-			l.add(f.newRandomElement());
+			l.add(Zn.newRandomElement());
 		}
 
 		return l;
