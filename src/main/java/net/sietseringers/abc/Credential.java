@@ -2,6 +2,9 @@ package net.sietseringers.abc;
 
 import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Field;
+import it.unisa.dia.gas.jpbc.Pairing;
+import net.sietseringers.abc.issuance.RequestIssuanceMessage;
+import net.sietseringers.abc.issuance.StartIssuanceMessage;
 import org.irmacard.credentials.Attributes;
 import org.irmacard.credentials.info.*;
 
@@ -31,6 +34,21 @@ public class Credential {
 
 	public Element kappa;
 	public List<Element> ki;
+
+	private Credential(Element K, Element S, Element S0, Element secretKey) {
+		G1 = SystemParameters.e.getG1();
+		Zn = SystemParameters.e.getZr();
+
+		Si = new ElementList(6);
+		ki = new ElementList(6);
+
+		this.K = K.getImmutable();
+		this.S = S.getImmutable();
+		this.Si.add(S0.getImmutable());
+
+		this.kappa = Zn.newRandomElement();
+		this.ki.add(secretKey);
+	}
 
 	public Credential(Element K, Element S, ElementList Si, Element T, Element kappa, ElementList ki) {
 		G1 = K.getField();
@@ -135,5 +153,18 @@ public class Credential {
 		}
 
 		return attributes;
+	}
+
+	public boolean isValid(PublicKey pk) {
+		boolean answer = true;
+		Pairing e = SystemParameters.e;
+
+		// C has already been set to its appropriate value by the constructor
+		answer = answer && e.pairing(C, pk.Z).equals( e.pairing(T, pk.Q) );
+		answer = answer && e.pairing(K, pk.A).equals( e.pairing(S, pk.Q) );
+		for (int i = 0; i < Si.size(); i++)
+			answer = answer && e.pairing(K, pk.Ai.get(i)).equals( e.pairing(Si.get(i), pk.Q) );
+
+		return answer;
 	}
 }

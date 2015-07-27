@@ -2,11 +2,41 @@ package net.sietseringers.abc;
 
 import it.unisa.dia.gas.jpbc.Pairing;
 import it.unisa.dia.gas.jpbc.PairingParameters;
+import it.unisa.dia.gas.jpbc.PairingParametersGenerator;
 import it.unisa.dia.gas.plaf.jpbc.pairing.PairingFactory;
 import it.unisa.dia.gas.plaf.jpbc.pairing.f.TypeFCurveGenerator;
+import it.unisa.dia.gas.plaf.jpbc.pairing.parameters.PropertiesParameters;
+import it.unisa.dia.gas.plaf.jpbc.pbc.PBCPairingFactory;
+import it.unisa.dia.gas.plaf.jpbc.pbc.curve.PBCTypeDCurveGenerator;
 
 public class SystemParameters {
-	public final static int bits = 64;
-	public final static PairingParameters pairingParameters = new TypeFCurveGenerator(bits).generate();
-	public final static Pairing e = PairingFactory.getPairing(pairingParameters);
+	public static PairingParameters pairingParameters = null; // new PBCTypeDCurveGenerator(9563).generate();
+
+	public final static Pairing e = PBCPairingFactory.getPairing(getPairingParameters());
+
+	public static PairingParameters getPairingParameters() {
+		if (pairingParameters != null)
+			return pairingParameters;
+
+		PropertiesParameters params = new PropertiesParameters();
+
+		params.put("type", "d");
+		params.put("q", "2094476214847295281570670320144695883131009753607350517892357");
+		params.put("n", "2094476214847295281570670320143248652598286201895740019876423");
+		params.put("h", "1122591");
+		params.put("r", "1865751832009427548920907365321162072917283500309320153");
+		params.put("a", "302787671841489685402328432344391509547410202009421501511099");
+		params.put("b", "173929193592293131084105222150264652964728243539377310074877");
+		params.put("k", "6");
+		params.put("nk", "84421409121513221644716967251498543569964760150943970280296295496165154657097987617093928595467244393873913569302597521196137376192587250931727762632568620562823714441576400096248911214941742242106512149305076320555351603145285797909942596124862593877499051211952936404822228308154770272833273836975042632765377879565229109013234552083886934379264203243445590336");
+		params.put("hk", "24251848326363771171270027814768648115136299306034875585195931346818912374815385257266068811350396365799298585287746735681314613260560203359251331805443378322987677594618057568388400134442772232086258797844238238645130212769322779762522643806720212266304");
+		params.put("coeff0", "1763829920271431758796317463827955960868781513843088979385891");
+		params.put("coeff1", "2076591591238820597682607365165149234607260738253182854988561");
+		params.put("coeff2", "930397085792492841370716875760189877110303155150569632771293");
+		params.put("nqr", "1807438490855212619204663078886880205692869460343120451655207");
+
+		pairingParameters = params;
+
+		return pairingParameters;
+	}
 }

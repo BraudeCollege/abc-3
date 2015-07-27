@@ -6,6 +6,14 @@ import java.util.*;
 import java.lang.*;
 
 import it.unisa.dia.gas.jpbc.*;
+import it.unisa.dia.gas.plaf.jpbc.pairing.PairingFactory;
+import it.unisa.dia.gas.plaf.jpbc.pairing.d.TypeDPairing;
+import it.unisa.dia.gas.plaf.jpbc.pbc.PBCPairingFactory;
+import it.unisa.dia.gas.plaf.jpbc.pbc.curve.PBCTypeDCurveGenerator;
+import net.sietseringers.abc.issuance.CommitmentIssuanceMessage;
+import net.sietseringers.abc.issuance.FinishIssuanceMessage;
+import net.sietseringers.abc.issuance.RequestIssuanceMessage;
+import net.sietseringers.abc.issuance.StartIssuanceMessage;
 import org.irmacard.credentials.Attributes;
 import org.irmacard.credentials.info.CredentialDescription;
 import org.irmacard.credentials.info.DescriptionStore;
@@ -21,9 +29,6 @@ class Main
 
 		// Generate a new private/public keypair
 		PrivateKey sk = new PrivateKey(6);
-		System.out.println(sk.toString());
-		System.out.println();
-		System.out.println(sk.publicKey.toString());
 
 		// Load the "agelower" CredentialDescription from the store
 		DescriptionStore.setCoreLocation(
@@ -37,8 +42,18 @@ class Main
 		}
 
 		start = System.currentTimeMillis();
+
 		// Build a credential, put it in a card, print its attributes
-		Credential c = sk.sign(agelower, attributes, BigInteger.valueOf(100));
+		CredentialIssuer issuer = new CredentialIssuer(sk);
+		CredentialBuilder builder = new CredentialBuilder();
+
+		RequestIssuanceMessage request = builder.generateRequestIssuanceMessage(agelower, attributes);
+		StartIssuanceMessage startMessage = issuer.generateStartIssuanceMessage(request);
+		CommitmentIssuanceMessage commitMessage = builder.generateCommitmentIssuanceMessage(startMessage);
+		FinishIssuanceMessage finishMessage = issuer.generateFinishIssuanceMessage(commitMessage);
+
+		Credential c = builder.generateCredential(finishMessage);
+
 		Credentials card = new Credentials();
 		card.set(agelower, c);
 		System.out.println(card.getAttributes(agelower).toString());

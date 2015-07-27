@@ -6,6 +6,8 @@ import it.unisa.dia.gas.jpbc.Pairing;
 import it.unisa.dia.gas.jpbc.PairingParameters;
 import it.unisa.dia.gas.plaf.jpbc.field.z.ZrField;
 import it.unisa.dia.gas.plaf.jpbc.pairing.PairingFactory;
+import net.sietseringers.abc.issuance.RequestIssuanceMessage;
+import net.sietseringers.abc.issuance.StartIssuanceMessage;
 import org.irmacard.credentials.Attributes;
 import org.irmacard.credentials.CredentialsException;
 import org.irmacard.credentials.info.AttributeDescription;
@@ -73,32 +75,5 @@ public class PrivateKey {
 		}
 
 		return sb.toString();
-	}
-
-	public Credential sign(CredentialDescription cd, Attributes attributes, BigInteger secretkey) throws CredentialsException {
-		attributes.setExpireDate(null); // default, 6 months
-		attributes.setCredentialID(cd.getId());
-
-		return sign(Util.AttributeToElements(cd, attributes, secretkey));
-	}
-
-	public Credential sign(ElementList ki) {
-		Element K = G1.newRandomElement();
-		Element S = K.duplicate().powZn(a);
-		Element kappa = Zn.newRandomElement();
-
-		ElementList Si = new ElementList(n+1);
-
-		Element C = K.duplicate().mul(S.duplicate().powZn(kappa));
-
-		for (int i = 0; i < ki.size(); i++) {
-			Element newSi = K.duplicate().powZn(ai.get(i));
-			Si.add(newSi);
-			C.mul(newSi.duplicate().powZn(ki.get(i)));
-		}
-
-		Element T = C.duplicate().powZn(z);
-
-		return new Credential(K, S, Si, T, kappa, ki);
 	}
 }

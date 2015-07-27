@@ -1,0 +1,105 @@
+package net.sietseringers.abc;
+
+import it.unisa.dia.gas.jpbc.Element;
+import it.unisa.dia.gas.jpbc.Field;
+import net.sietseringers.abc.PrivateKey;
+import net.sietseringers.abc.issuance.CommitmentIssuanceMessage;
+import net.sietseringers.abc.issuance.FinishIssuanceMessage;
+import net.sietseringers.abc.issuance.RequestIssuanceMessage;
+import net.sietseringers.abc.issuance.StartIssuanceMessage;
+import org.irmacard.credentials.Attributes;
+import org.irmacard.credentials.CredentialsException;
+import org.irmacard.credentials.info.CredentialDescription;
+
+import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+
+public class CredentialIssuer {
+	private Field G1 = SystemParameters.e.getG1();
+	private Field Zn = SystemParameters.e.getZr();
+	private Map<Integer, RequestIssuanceMessage> requests = new HashMap<>();
+	private Map<Integer, StartIssuanceMessage> startMessages = new HashMap<>();
+	private PrivateKey sk = null;
+
+	public CredentialIssuer(PrivateKey sk) {
+		this.sk = sk;
+	}
+
+	public StartIssuanceMessage generateStartIssuanceMessage(RequestIssuanceMessage request) {
+		Random r = new Random();
+		int session = r.nextInt(Integer.MAX_VALUE);
+
+		Element K = G1.newRandomElement();
+		Element S = K.duplicate().powZn(sk.a);
+		Element S0 = K.duplicate().powZn(sk.ai.get(0));
+
+		StartIssuanceMessage msg = new StartIssuanceMessage(session, K, S, S0, Util.generateNonce());
+
+		requests.put(session, request);
+		startMessages.put(session, msg);
+
+		return msg;
+	}
+
+	public FinishIssuanceMessage generateFinishIssuanceMessage(CommitmentIssuanceMessage msg) {
+		RequestIssuanceMessage request = requests.get(msg.getSession());
+		StartIssuanceMessage start = startMessages.get(msg.getSession());
+
+		if (request == null || start == null)
+			return null;
+
+		if (!msg.isValid(start.getNonce(), start.getS(), start.getS0()))
+			return null;
+
+		Element kappa = Zn.newRandomElement();
+		Attributes attributes = request.getAttributes();
+		attributes.setCredentialID(request.getCredentialDescription().getId());
+		attributes.setExpireDate(null);
+		ElementList ki = Util.AttributeToElements(request.getCredentialDescription(), attributes);
+
+		int n = attributes.getIdentifiers().size() + 1;
+		ElementList Si = new ElementList(n + 1);
+
+		Si.add(start.getS0());
+		Element T = start.getK();
+		T.mul(start.getS().powZn(kappa).mul(msg.getR()));
+
+		for (int i = 1; i < n; i++) {
+			Si.add(start.getK().powZn(sk.ai.get(i)));
+			T.mul(Si.get(i).duplicate().powZn(ki.get(i)));
+		}
+
+		T.powZn(sk.z);
+
+		return new FinishIssuanceMessage(kappa, Si, T);
+	}
+
+	public Credential sign(CredentialDescription cd, Attributes attributes, BigInteger secretkey) throws CredentialsException {
+		attributes.setExpireDate(null); // default, 6 months
+		attributes.setCredentialID(cd.getId());
+
+		return sign(Util.AttributeToElements(cd, attributes, secretkey));
+	}
+
+	public Credential sign(ElementList ki) {
+		Element K = G1.newRandomElement();
+		Element S = K.duplicate().powZn(sk.a);
+		Element kappa = Zn.newRandomElement();
+
+		ElementList Si = new ElementList(sk.n+1);
+
+		Element C = K.duplicate().mul(S.duplicate().powZn(kappa));
+
+		for (int i = 0; i < ki.size(); i++) {
+			Element newSi = K.duplicate().powZn(sk.ai.get(i));
+			Si.add(newSi);
+			C.mul(newSi.duplicate().powZn(ki.get(i)));
+		}
+
+		Element T = C.duplicate().powZn(sk.z);
+
+		return new Credential(K, S, Si, T, kappa, ki);
+	}
+}

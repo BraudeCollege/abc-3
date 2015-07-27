@@ -1,6 +1,11 @@
 package net.sietseringers.abc;
 
+import it.unisa.dia.gas.jpbc.Element;
+import it.unisa.dia.gas.jpbc.Field;
 import net.sf.scuba.smartcards.CardServiceException;
+import net.sietseringers.abc.issuance.CommitmentIssuanceMessage;
+import net.sietseringers.abc.issuance.RequestIssuanceMessage;
+import net.sietseringers.abc.issuance.StartIssuanceMessage;
 import org.irmacard.credentials.Attributes;
 import org.irmacard.credentials.BaseCredentials;
 import org.irmacard.credentials.CredentialsException;
@@ -14,7 +19,12 @@ import java.util.List;
 import java.util.Map;
 
 public class Credentials extends BaseCredentials {
+	private static final Field Zn = SystemParameters.e.getZr();
+
 	private Map<Short, Credential> credentials = new HashMap<>();
+
+	private Attributes attributes;
+	private Credential c;
 
 	public Credential get(short id) {
 		return credentials.get(id);

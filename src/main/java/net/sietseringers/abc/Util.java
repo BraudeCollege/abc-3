@@ -5,6 +5,7 @@ import it.unisa.dia.gas.jpbc.Field;
 import org.irmacard.credentials.Attributes;
 import org.irmacard.credentials.info.AttributeDescription;
 import org.irmacard.credentials.info.CredentialDescription;
+import org.w3c.dom.Attr;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -28,17 +29,21 @@ public class Util {
 		return SystemParameters.e.getZr().newElementFromBytes(hash);
 	}
 
+	public static ElementList AttributeToElements(CredentialDescription cd, Attributes attributes) {
+		return AttributeToElements(cd, attributes, BigInteger.ZERO);
+	}
+
 	public static ElementList AttributeToElements(CredentialDescription cd, Attributes attributes, BigInteger secretkey) {
 		Field Zn = SystemParameters.e.getZr();
 
 		ElementList ki = new ElementList(attributes.getIdentifiers().size() + 2);
 		ki.add(Zn.newElement(secretkey));
-		ki.add(Zn.newElementFromBytes(attributes.get("metadata")));
+		ki.add(Zn.newElement(new BigInteger(attributes.get("metadata"))));
 
 		List<AttributeDescription> l = cd.getAttributes();
 		for (int i = 0; i < l.size(); i++) {
 			byte[] attribute = attributes.get(l.get(i).getName());
-			ki.add(Zn.newElementFromBytes(attribute));
+			ki.add(Zn.newElement(new BigInteger(attribute)));
 		}
 
 		return ki;
