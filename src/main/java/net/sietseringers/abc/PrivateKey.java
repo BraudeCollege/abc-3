@@ -4,8 +4,15 @@ import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Field;
 import it.unisa.dia.gas.jpbc.Pairing;
 import it.unisa.dia.gas.jpbc.PairingParameters;
+import it.unisa.dia.gas.plaf.jpbc.field.z.ZrField;
 import it.unisa.dia.gas.plaf.jpbc.pairing.PairingFactory;
+import org.irmacard.credentials.Attributes;
+import org.irmacard.credentials.CredentialsException;
+import org.irmacard.credentials.info.AttributeDescription;
+import org.irmacard.credentials.info.CredentialDescription;
+import org.irmacard.credentials.info.DescriptionStore;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,6 +75,13 @@ public class PrivateKey {
 		return sb.toString();
 	}
 
+	public Credential sign(CredentialDescription cd, Attributes attributes, BigInteger secretkey) throws CredentialsException {
+		attributes.setExpireDate(null); // default, 6 months
+		attributes.setCredentialID(cd.getId());
+
+		return sign(Util.AttributeToElements(cd, attributes, secretkey));
+	}
+
 	public Credential sign(ElementList ki) {
 		Element K = G1.newRandomElement();
 		Element S = K.duplicate().powZn(a);
@@ -77,7 +91,7 @@ public class PrivateKey {
 
 		Element C = K.duplicate().mul(S.duplicate().powZn(kappa));
 
-		for (int i = 0; i <= n; i++) {
+		for (int i = 0; i < ki.size(); i++) {
 			Element newSi = K.duplicate().powZn(ai.get(i));
 			Si.add(newSi);
 			C.mul(newSi.duplicate().powZn(ki.get(i)));

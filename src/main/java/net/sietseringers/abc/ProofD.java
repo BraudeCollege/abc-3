@@ -2,9 +2,13 @@ package net.sietseringers.abc;
 
 import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Pairing;
+import org.irmacard.credentials.Attributes;
+import org.irmacard.credentials.info.CredentialDescription;
+import org.irmacard.credentials.info.VerificationDescription;
 
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ProofD {
@@ -68,7 +72,27 @@ public class ProofD {
 		return c;
 	}
 
+	public Attributes verify(VerificationDescription vd, PublicKey pk) {
+		return verify(vd.getCredentialDescription(), pk, nonce);
+	}
+
+	public Attributes verify(VerificationDescription vd, PublicKey pk, BigInteger nonce) {
+		return verify(vd.getCredentialDescription(), pk, nonce);
+	}
+
+	public Attributes verify(CredentialDescription cd, PublicKey pk, BigInteger nonce) {
+		if (!isValid(pk, nonce))
+			return null;
+
+		return Util.ElementsToAttributes(cd, ki);
+	}
+
 	public boolean isValid(PublicKey pk) {
+		return isValid(pk, nonce);
+	}
+
+
+	public boolean isValid(PublicKey pk, BigInteger nonce) {
 		Pairing e = SystemParameters.e;
 
 		boolean answer = e.pairing(C, pk.Z).equals(e.pairing(T, pk.Q));
@@ -84,7 +108,11 @@ public class ProofD {
 		}
 
 		// D^c * W == rhs
-		answer = answer && getD().duplicate().powZn(getChallenge()).mul(W).isEqual(rhs);
+		Element c = Util.getChallenge(getD(), nonce);
+		if (nonce.equals(BigInteger.ZERO))
+			c = getChallenge();
+
+		answer = answer && getD().duplicate().powZn(c).mul(W).isEqual(rhs);
 		return answer;
 	}
 }

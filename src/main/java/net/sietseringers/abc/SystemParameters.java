@@ -6,7 +6,7 @@ import it.unisa.dia.gas.plaf.jpbc.pairing.PairingFactory;
 import it.unisa.dia.gas.plaf.jpbc.pairing.f.TypeFCurveGenerator;
 
 public class SystemParameters {
-	public final static int bits = 20;
+	public final static int bits = 64;
 	public final static PairingParameters pairingParameters = new TypeFCurveGenerator(bits).generate();
 	public final static Pairing e = PairingFactory.getPairing(pairingParameters);
 }
