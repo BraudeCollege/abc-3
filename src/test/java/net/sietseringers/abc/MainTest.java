@@ -1,15 +1,6 @@
 package net.sietseringers.abc;
 
-import java.io.File;
-import java.math.BigInteger;
-import java.util.*;
-import java.lang.*;
-
-import it.unisa.dia.gas.jpbc.*;
-import it.unisa.dia.gas.plaf.jpbc.pairing.PairingFactory;
-import it.unisa.dia.gas.plaf.jpbc.pairing.d.TypeDPairing;
-import it.unisa.dia.gas.plaf.jpbc.pbc.PBCPairingFactory;
-import it.unisa.dia.gas.plaf.jpbc.pbc.curve.PBCTypeDCurveGenerator;
+import it.unisa.dia.gas.jpbc.Pairing;
 import net.sietseringers.abc.issuance.CommitmentIssuanceMessage;
 import net.sietseringers.abc.issuance.FinishIssuanceMessage;
 import net.sietseringers.abc.issuance.RequestIssuanceMessage;
@@ -18,11 +9,14 @@ import org.irmacard.credentials.Attributes;
 import org.irmacard.credentials.info.CredentialDescription;
 import org.irmacard.credentials.info.DescriptionStore;
 import org.irmacard.credentials.info.VerificationDescription;
+import org.junit.Test;
 
-class Main
-{
-	public static void main (String[] args) throws java.lang.Exception
-	{
+import java.io.File;
+import java.util.Arrays;
+
+public class MainTest {
+	@Test
+	public void test() throws Exception {
 		Pairing e = SystemParameters.e;
 		long start;
 		long stop;

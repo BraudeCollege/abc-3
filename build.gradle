@@ -2,9 +2,6 @@ group 'net.sietseringers'
 version '0.1'
 
 apply plugin: 'java'
-apply plugin: 'application'
-
-mainClassName = "net.sietseringers.abc.Main"
 
 sourceCompatibility = 1.7
 
