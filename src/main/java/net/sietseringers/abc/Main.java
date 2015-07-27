@@ -16,6 +16,8 @@ class Main
 	public static void main (String[] args) throws java.lang.Exception
 	{
 		Pairing e = SystemParameters.e;
+		long start;
+		long stop;
 
 		// Generate a new private/public keypair
 		PrivateKey sk = new PrivateKey(6);
@@ -34,23 +36,35 @@ class Main
 			attributes.add(name, "yes".getBytes());
 		}
 
+		start = System.currentTimeMillis();
 		// Build a credential, put it in a card, print its attributes
 		Credential c = sk.sign(agelower, attributes, BigInteger.valueOf(100));
 		Credentials card = new Credentials();
 		card.set(agelower, c);
 		System.out.println(card.getAttributes(agelower).toString());
+		stop = System.currentTimeMillis();
+		System.out.println("Issuing: " + (stop-start) + " ms");
 
 		// Create a disclosure proof
+		start = System.currentTimeMillis();
 		ProofD proof = c.getDisclosureProof(Util.generateNonce(), Arrays.asList(1, 2, 3));
+		stop = System.currentTimeMillis();
+		System.out.println("Disclosing: " + (stop-start) + " ms");
 
 		// Verify it directly
+		start = System.currentTimeMillis();
 		System.out.println(proof.isValid(sk.publicKey));
+		stop = System.currentTimeMillis();
+		System.out.println("Verify 1: " + (stop-start) + " ms");
 
 		// Verify it and return the contained attributes using a VerificationDescription
+		start = System.currentTimeMillis();
 		VerificationDescription vd = DescriptionStore.getInstance()
 				.getVerificationDescriptionByName("IRMATube", "ageLowerOver18");
 		proof = c.getDisclosureProof(vd, Util.generateNonce());
 		Attributes disclosed = proof.verify(vd, sk.publicKey);
 		System.out.println(disclosed.toString());
+		stop = System.currentTimeMillis();
+		System.out.println("Verify 2: " + (stop-start) + " ms");
 	}
 }
