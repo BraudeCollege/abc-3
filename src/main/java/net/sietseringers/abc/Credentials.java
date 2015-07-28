@@ -23,9 +23,6 @@ public class Credentials extends BaseCredentials {
 
 	private Map<Short, Credential> credentials = new HashMap<>();
 
-	private Attributes attributes;
-	private Credential c;
-
 	public Credential get(short id) {
 		return credentials.get(id);
 	}

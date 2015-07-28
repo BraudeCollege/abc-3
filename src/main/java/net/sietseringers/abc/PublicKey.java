@@ -25,7 +25,7 @@ public class PublicKey {
 
 	public PublicKey(PairingParameters params, int n) {
 		this.params = params;
-		this.e = PairingFactory.getPairing(params);
+		this.e = SystemParameters.e;
 		this.n = n;
 		this.G1 = e.getG1();
 		this.G2 = e.getG2();
