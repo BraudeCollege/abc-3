@@ -26,6 +26,12 @@ task sourcesJar(type: Jar, dependsOn: classes) {
     from sourceSets.main.allSource
 }
 
+task packageTests(type: Jar) {
+    classifier = 'test'
+    from sourceSets.test.output
+}
+
 artifacts {
     archives sourcesJar
+    archives packageTests
 }
