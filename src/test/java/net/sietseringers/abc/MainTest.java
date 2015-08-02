@@ -26,74 +26,142 @@ import net.sietseringers.abc.issuance.FinishIssuanceMessage;
 import net.sietseringers.abc.issuance.RequestIssuanceMessage;
 import net.sietseringers.abc.issuance.StartIssuanceMessage;
 import org.irmacard.credentials.Attributes;
+import org.irmacard.credentials.CredentialsException;
 import org.irmacard.credentials.info.CredentialDescription;
 import org.irmacard.credentials.info.DescriptionStore;
+import org.irmacard.credentials.info.InfoException;
 import org.irmacard.credentials.info.VerificationDescription;
+import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import javax.sound.midi.MidiDevice;
 import java.io.File;
+import java.io.PrintStream;
+import java.math.BigInteger;
+import java.net.URI;
 import java.util.Arrays;
 
 public class MainTest {
-	@Test
-	public void test() throws Exception {
-		Pairing e = SystemParameters.e;
-		long start;
-		long stop;
+	private static DescriptionStore ds;
+	private static PrintStream out;
 
-		// Generate a new private/public keypair
-		PrivateKey sk = new PrivateKey(6);
+	private static Credentials card;
+	private static PrivateKey sk;
 
-		// Load the "agelower" CredentialDescription from the store
-		DescriptionStore.setCoreLocation(
-				new File(System.getProperty("user.dir")).toURI().resolve("irma_configuration/"));
-		CredentialDescription agelower = DescriptionStore.getInstance().getCredentialDescription((short)10);
+	public static void setDescriptionStore(DescriptionStore store) {
+		ds = store;
+	}
 
-		// Build the attributes that we want in our credential
-		Attributes attributes = new Attributes();
-		for (String name : agelower.getAttributeNames()) {
-			attributes.add(name, "yes".getBytes());
+	public static void setPrintStream(PrintStream stream) {
+		out = stream;
+	}
+
+	@BeforeClass
+	public static void init() {
+		card = new Credentials();
+		sk = new PrivateKey(6);
+
+		// If ds is not set, we create one on our own.
+		if (ds == null) {
+			try {
+				URI core = new File(System
+						.getProperty("user.dir")).toURI()
+						.resolve("irma_configuration/");
+				DescriptionStore.setCoreLocation(core);
+				ds = DescriptionStore.getInstance();
+			} catch (InfoException e) {
+				e.printStackTrace();
+			}
 		}
 
-		start = System.currentTimeMillis();
+		if (out == null)
+			out = System.out;
+	}
 
-		// Build a credential, put it in a card, print its attributes
+	@Test
+	public void testAgeLowerOver18() throws InfoException {
+		issue("MijnOverheid", "ageLower");
+		proofAndVerifyTest("IRMATube", "ageLowerOver18");
+	}
+
+	@Test
+	public void testStudentCardAll() throws InfoException {
+		issue("RU", "studentCard");
+		proofAndVerifyTest("RU", "studentCardAll");
+	}
+
+	public void proofAndVerifyTest(String verifier, String verifierId) throws InfoException {
+		BigInteger nonce = Util.generateNonce();
+		ProofD proof = getProof(verifier, verifierId, nonce);
+		verifyProof(proof, verifier, verifierId);
+	}
+
+	public ProofD getProof(String verifier, String verifierId, BigInteger nonce) throws
+			InfoException {
+		VerificationDescription vd = ds.getVerificationDescriptionByName(verifier, verifierId);
+		Credential c = card.get(vd.getCredentialDescription());
+
+		long start = System.currentTimeMillis();
+
+		ProofD proof = c.getDisclosureProof(vd, nonce);
+
+		long stop = System.currentTimeMillis();
+		out.println("Disclosing: " + (stop-start) + " ms");
+
+		return proof;
+	}
+
+	public void issue(String issuerid, String credid) {
+		CredentialDescription cd = ds.getCredentialDescriptionByName(issuerid, credid);
+
+		Attributes attrs = loadNewAttributes(cd);
+
 		CredentialIssuer issuer = new CredentialIssuer(sk);
 		CredentialBuilder builder = new CredentialBuilder();
 
-		RequestIssuanceMessage request = builder.generateRequestIssuanceMessage(agelower, attributes);
+		long start = System.currentTimeMillis();
+
+		RequestIssuanceMessage request = builder.generateRequestIssuanceMessage(cd, attrs);
 		StartIssuanceMessage startMessage = issuer.generateStartIssuanceMessage(request);
 		CommitmentIssuanceMessage commitMessage = builder.generateCommitmentIssuanceMessage(startMessage);
 		FinishIssuanceMessage finishMessage = issuer.generateFinishIssuanceMessage(commitMessage);
 
 		Credential c = builder.generateCredential(finishMessage);
 
-		Credentials card = new Credentials();
-		card.set(agelower, c);
-		System.out.println(card.getAttributes(agelower).toString());
-		stop = System.currentTimeMillis();
-		System.out.println("Issuing: " + (stop-start) + " ms");
+		Assert.assertNotNull(c);
 
-		// Create a disclosure proof
-		start = System.currentTimeMillis();
-		ProofD proof = c.getDisclosureProof(Util.generateNonce(), Arrays.asList(1, 2, 3));
-		stop = System.currentTimeMillis();
-		System.out.println("Disclosing: " + (stop-start) + " ms");
+		card.set(c.getId(), c);
 
-		// Verify it directly
-		start = System.currentTimeMillis();
-		System.out.println(proof.isValid(sk.publicKey));
-		stop = System.currentTimeMillis();
-		System.out.println("Verify 1: " + (stop-start) + " ms");
+		long stop = System.currentTimeMillis();
+		out.println("Issuing: " + (stop-start) + " ms");
+	}
 
-		// Verify it and return the contained attributes using a VerificationDescription
-		start = System.currentTimeMillis();
-		VerificationDescription vd = DescriptionStore.getInstance()
-				.getVerificationDescriptionByName("IRMATube", "ageLowerOver18");
-		proof = c.getDisclosureProof(vd, Util.generateNonce());
+	public Attributes loadNewAttributes(CredentialDescription cd) {
+		Attributes attrs = new Attributes();
+		attrs.setCredentialID(cd.getId());
+		int i = 0;
+		for (String name : cd.getAttributeNames()) {
+			attrs.add(name, String.valueOf(i).getBytes());
+			++i;
+		}
+
+		return attrs;
+	}
+
+	public Attributes verifyProof(ProofD proof, String verifier, String verifierId) throws
+			InfoException {
+		VerificationDescription vd = ds.getVerificationDescriptionByName(verifier, verifierId);
+
+		long start = System.currentTimeMillis();
+
 		Attributes disclosed = proof.verify(vd, sk.publicKey);
-		System.out.println(disclosed.toString());
-		stop = System.currentTimeMillis();
-		System.out.println("Verify 2: " + (stop-start) + " ms");
+		Assert.assertNotNull(disclosed);
+
+		long stop = System.currentTimeMillis();
+		out.println("Verifying: " + (stop-start) + " ms");
+		out.println("Disclosed attributes: " + disclosed.toString().replace("\n", ""));
+
+		return disclosed;
 	}
 }
