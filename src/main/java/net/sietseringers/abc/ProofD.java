@@ -28,25 +28,24 @@ import org.irmacard.credentials.info.VerificationDescription;
 
 import java.math.BigInteger;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class ProofD {
-	public int n;
-	public BigInteger nonce;
+	private int n;
+	private BigInteger nonce;
 
-	public Element K;
-	public Element S;
-	public ElementList Si;
-	public Element C;
-	public Element T;
-	public Element W;
+	private Element K;
+	private Element S;
+	private ElementList Si;
+	private Element C;
+	private Element T;
+	private Element W;
 
-	public Element D;
-	public Element c;
+	private Element D;
+	private Element c;
 
-	public Map<Integer, Element> ki;
-	public Map<Integer, Element> si;
+	private Map<Integer, Element> ki;
+	private Map<Integer, Element> si;
 
 	public ProofD(int n, BigInteger nonce, Element bK, Element bS, ElementList bSi, Element bC, Element bT, Element W, Map<Integer,Element> si, Map<Integer,Element> attrs) {
 		this.n = n;
@@ -72,11 +71,11 @@ public class ProofD {
 		if (D != null)
 			return D;
 
-		D = K.duplicate();
+		D = getK();
 
 		for (int i = 1; i <= n; i++)
 			if (ki.containsKey(i))
-				D.mul( Si.get(i).duplicate().powZn(ki.get(i)) ); // D = D * Si^ki
+				D.mul( getSi(i).powZn(ki.get(i)) ); // D = D * Si^ki
 
 		D = D.invert().getImmutable();
 
@@ -115,16 +114,16 @@ public class ProofD {
 	public boolean isValid(PublicKey pk, BigInteger nonce) {
 		Pairing e = SystemParameters.e;
 
-		boolean answer = e.pairing(C, pk.Z).equals(e.pairing(T, pk.Q));
-		answer = answer && e.pairing(K, pk.A).equals(e.pairing(S, pk.Q));
+		boolean answer = e.pairing(C, pk.getZ()).equals(e.pairing(T, pk.getQ()));
+		answer = answer && e.pairing(K, pk.getA()).equals(e.pairing(S, pk.getQ()));
 
-		Element rhs = C.duplicate().powZn(si.get(-2)); // rhs = C^si[-2]
-		rhs.mul(S.duplicate().powZn(si.get(-1)));      // rhs = rhs * S^si[-1]
+		Element rhs = getC().powZn(getsi(-2)); // rhs = C^si[-2]
+		rhs.mul(getS().powZn(getsi(-1)));      // rhs = rhs * S^si[-1]
 
 		for (int i = 0; i <= n; i++) {
 			if (!ki.containsKey(i))
-				rhs.mul(Si.get(i).duplicate().powZn(si.get(i))); // rhs = rhs * Si^si
-			answer = answer && e.pairing(K, pk.Ai.get(i)).equals(e.pairing(Si.get(i), pk.Q));
+				rhs.mul(getSi(i).powZn(getsi(i))); // rhs = rhs * Si^si
+			answer = answer && e.pairing(K, pk.getAi(i)).equals(e.pairing(getSi(i), pk.getQ()));
 		}
 
 		// D^c * W == rhs
@@ -132,7 +131,47 @@ public class ProofD {
 		if (nonce.equals(BigInteger.ZERO))
 			c = getChallenge();
 
-		answer = answer && getD().duplicate().powZn(c).mul(W).isEqual(rhs);
+		answer = answer && getD().powZn(c).mul(W).isEqual(rhs);
 		return answer;
+	}
+
+	public int getN() {
+		return n;
+	}
+
+	public BigInteger getNonce() {
+		return nonce;
+	}
+
+	public Element getK() {
+		return K.duplicate();
+	}
+
+	public Element getS() {
+		return S.duplicate();
+	}
+
+	public Element getSi(int i) {
+		return Si.get(i).duplicate();
+	}
+
+	public Element getC() {
+		return C.duplicate();
+	}
+
+	public Element getT() {
+		return T.duplicate();
+	}
+
+	public Element getW() {
+		return W.duplicate();
+	}
+
+	public Element getki(int i) {
+		return ki.get(i).duplicate();
+	}
+
+	public Element getsi(int i) {
+		return si.get(i).duplicate();
 	}
 }

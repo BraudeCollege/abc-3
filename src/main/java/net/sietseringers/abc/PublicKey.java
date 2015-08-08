@@ -23,29 +23,20 @@ package net.sietseringers.abc;
 import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Field;
 import it.unisa.dia.gas.jpbc.Pairing;
-import it.unisa.dia.gas.jpbc.PairingParameters;
-import it.unisa.dia.gas.plaf.jpbc.pairing.PairingFactory;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class PublicKey {
-	public Pairing e;
-	public PairingParameters params;
-	public int n;
+	private int n;
+	private Pairing e = SystemParameters.e;
 	private Field G1;
 	private Field G2;
 	private Field Zn;
 
-	public Element Q;
+	private Element Q;
+	private Element A;
+	private ElementList Ai;
+	private Element Z;
 
-	public Element A;
-	public ElementList Ai;
-	public Element Z;
-
-	public PublicKey(PairingParameters params, int n) {
-		this.params = params;
-		this.e = SystemParameters.e;
+	public PublicKey(int n) {
 		this.n = n;
 		this.G1 = e.getG1();
 		this.G2 = e.getG2();
@@ -53,12 +44,19 @@ public class PublicKey {
 		this.Ai = new ElementList(n);
 	}
 
+	public PublicKey(Element Q, Element A, ElementList Ai, Element Z) {
+		this(Ai.size());
+		this.Q = Q;
+		this.A = A;
+		this.Ai = Ai;
+		this.Z = Z;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 
 		sb.append("PrivateKey: ")
-				.append(params.toString("="))
 				.append("Z=").append(Z.toString())
 				.append("\nA=").append(A.toString());
 
@@ -67,5 +65,21 @@ public class PublicKey {
 		}
 
 		return sb.toString();
+	}
+
+	public Element getQ() {
+		return Q.duplicate();
+	}
+
+	public Element getA() {
+		return A.duplicate();
+	}
+
+	public Element getAi(int i) {
+		return Ai.get(i).duplicate();
+	}
+
+	public Element getZ() {
+		return Z.duplicate();
 	}
 }

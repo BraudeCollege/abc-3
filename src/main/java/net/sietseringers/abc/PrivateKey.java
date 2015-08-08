@@ -23,40 +23,21 @@ package net.sietseringers.abc;
 import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Field;
 import it.unisa.dia.gas.jpbc.Pairing;
-import it.unisa.dia.gas.jpbc.PairingParameters;
-import it.unisa.dia.gas.plaf.jpbc.field.z.ZrField;
-import it.unisa.dia.gas.plaf.jpbc.pairing.PairingFactory;
-import net.sietseringers.abc.issuance.RequestIssuanceMessage;
-import net.sietseringers.abc.issuance.StartIssuanceMessage;
-import org.irmacard.credentials.Attributes;
-import org.irmacard.credentials.CredentialsException;
-import org.irmacard.credentials.info.AttributeDescription;
-import org.irmacard.credentials.info.CredentialDescription;
-import org.irmacard.credentials.info.DescriptionStore;
-
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
 
 public class PrivateKey {
-	public Pairing e;
-	public PublicKey publicKey;
-	public PairingParameters params;
-	public int n;
+	private Pairing e = SystemParameters.e;
 	private Field G1;
 	private Field G2;
 	private Field Zn;
 
-	public Element a;
-	public ElementList ai;
-	public Element z;
+	private PublicKey publicKey;
+	private int n;
+
+	private Element a;
+	private ElementList ai;
+	private Element z;
 
 	public PrivateKey(int n) {
-		this.params = SystemParameters.pairingParameters;
-		this.e = SystemParameters.e;
-
-		publicKey = new PublicKey(params, n);
-
 		this.ai = new ElementList(n + 1);
 
 		this.e = e;
@@ -65,20 +46,23 @@ public class PrivateKey {
 		this.G2 = e.getG2();
 		this.Zn = e.getZr();
 
-		publicKey.Q = G2.newRandomElement();
+		Element Q = G2.newRandomElement();
 
 		a = Zn.newRandomElement();
 		z = Zn.newRandomElement();
 
-		publicKey.A = publicKey.Q.duplicate().powZn(a);
-		publicKey.Z = publicKey.Q.duplicate().powZn(z);
+		Element A = Q.duplicate().powZn(geta());
+		Element Z = Q.duplicate().powZn(getz());
 
+		ElementList Ai = new ElementList(n+1);
 		for (int i = 0; i <= n; i++) {
 			Element newai = Zn.newRandomElement();
-			Element newAi = publicKey.Q.duplicate().powZn(newai);
+			Element newAi = Q.duplicate().powZn(newai);
 			ai.add(newai);
-			publicKey.Ai.add(newAi);
+			Ai.add(newAi);
 		}
+
+		publicKey = new PublicKey(Q, A, Ai, Z);
 	}
 
 	@Override
@@ -86,7 +70,6 @@ public class PrivateKey {
 		StringBuilder sb = new StringBuilder();
 
 		sb.append("PrivateKey: ")
-				.append(params.toString("="))
 				.append("z=").append(z.toString())
 				.append("\na=").append(a.toString());
 
@@ -95,5 +78,25 @@ public class PrivateKey {
 		}
 
 		return sb.toString();
+	}
+
+	public PublicKey getPublicKey() {
+		return publicKey;
+	}
+
+	public int getN() {
+		return n;
+	}
+
+	public Element geta() {
+		return a.duplicate();
+	}
+
+	public Element getai(int i) {
+		return ai.get(i).duplicate();
+	}
+
+	public Element getz() {
+		return z.duplicate();
 	}
 }

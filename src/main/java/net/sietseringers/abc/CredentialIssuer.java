@@ -22,7 +22,6 @@ package net.sietseringers.abc;
 
 import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Field;
-import net.sietseringers.abc.PrivateKey;
 import net.sietseringers.abc.issuance.CommitmentIssuanceMessage;
 import net.sietseringers.abc.issuance.FinishIssuanceMessage;
 import net.sietseringers.abc.issuance.RequestIssuanceMessage;
@@ -52,8 +51,8 @@ public class CredentialIssuer {
 		int session = r.nextInt(Integer.MAX_VALUE);
 
 		Element K = G1.newRandomElement();
-		Element S = K.duplicate().powZn(sk.a);
-		Element S0 = K.duplicate().powZn(sk.ai.get(0));
+		Element S = K.duplicate().powZn(sk.geta());
+		Element S0 = K.duplicate().powZn(sk.getai(0));
 
 		StartIssuanceMessage msg = new StartIssuanceMessage(session, K, S, S0, Util.generateNonce());
 
@@ -87,11 +86,11 @@ public class CredentialIssuer {
 		T.mul(start.getS().powZn(kappa).mul(msg.getR()));
 
 		for (int i = 1; i < n; i++) {
-			Si.add(start.getK().powZn(sk.ai.get(i)));
+			Si.add(start.getK().powZn(sk.getai(i)));
 			T.mul(Si.get(i).duplicate().powZn(ki.get(i)));
 		}
 
-		T.powZn(sk.z);
+		T.powZn(sk.getz());
 
 		return new FinishIssuanceMessage(kappa, Si, T);
 	}
@@ -105,20 +104,20 @@ public class CredentialIssuer {
 
 	public Credential sign(ElementList ki) {
 		Element K = G1.newRandomElement();
-		Element S = K.duplicate().powZn(sk.a);
+		Element S = K.duplicate().powZn(sk.geta());
 		Element kappa = Zn.newRandomElement();
 
-		ElementList Si = new ElementList(sk.n+1);
+		ElementList Si = new ElementList(sk.getN() +1);
 
 		Element C = K.duplicate().mul(S.duplicate().powZn(kappa));
 
 		for (int i = 0; i < ki.size(); i++) {
-			Element newSi = K.duplicate().powZn(sk.ai.get(i));
+			Element newSi = K.duplicate().powZn(sk.getai(i));
 			Si.add(newSi);
 			C.mul(newSi.duplicate().powZn(ki.get(i)));
 		}
 
-		Element T = C.duplicate().powZn(sk.z);
+		Element T = C.duplicate().powZn(sk.getz());
 
 		return new Credential(K, S, Si, T, kappa, ki);
 	}

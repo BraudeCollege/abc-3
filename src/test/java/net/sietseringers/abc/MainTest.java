@@ -20,13 +20,11 @@
 
 package net.sietseringers.abc;
 
-import it.unisa.dia.gas.jpbc.Pairing;
 import net.sietseringers.abc.issuance.CommitmentIssuanceMessage;
 import net.sietseringers.abc.issuance.FinishIssuanceMessage;
 import net.sietseringers.abc.issuance.RequestIssuanceMessage;
 import net.sietseringers.abc.issuance.StartIssuanceMessage;
 import org.irmacard.credentials.Attributes;
-import org.irmacard.credentials.CredentialsException;
 import org.irmacard.credentials.info.CredentialDescription;
 import org.irmacard.credentials.info.DescriptionStore;
 import org.irmacard.credentials.info.InfoException;
@@ -35,12 +33,10 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import javax.sound.midi.MidiDevice;
 import java.io.File;
 import java.io.PrintStream;
 import java.math.BigInteger;
 import java.net.URI;
-import java.util.Arrays;
 
 public class MainTest {
 	private static DescriptionStore ds;
@@ -77,6 +73,8 @@ public class MainTest {
 
 		if (out == null)
 			out = System.out;
+
+		out.println("Private key: " + sk.toString());
 	}
 
 	@Test
@@ -155,7 +153,7 @@ public class MainTest {
 
 		long start = System.currentTimeMillis();
 
-		Attributes disclosed = proof.verify(vd, sk.publicKey);
+		Attributes disclosed = proof.verify(vd, sk.getPublicKey());
 		Assert.assertNotNull(disclosed);
 
 		long stop = System.currentTimeMillis();
